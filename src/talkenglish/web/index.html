@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TalkEnglish</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #181b24;
+      --surface-border: #282c3c;
+      --text: #e6eaf2;
+      --text-muted: #8b949e;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --danger: #ef4444;
+      --success: #10b981;
+      --code-bg: #11131c;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 12px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand span {
+      color: var(--accent);
+    }
+
+    .shortcuts-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 0 16px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+
+    .tabs-container {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      white-space: nowrap;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      background: rgba(59, 130, 246, 0.08);
+      font-weight: 500;
+    }
+
+    .tab-title {
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tab-close {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 0 3px;
+    }
+
+    .tab-close:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .btn-new-tab {
+      background: transparent;
+      border: 1px dashed var(--surface-border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-left: 8px;
+    }
+
+    .btn-new-tab:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 860px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .dir-badge {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    textarea {
+      flex: 1;
+      min-height: 380px;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 16px;
+      color: var(--text);
+      font-size: 1rem;
+      line-height: 1.6;
+      resize: none;
+      font-family: inherit;
+    }
+
+    textarea::placeholder {
+      color: #555c70;
+    }
+
+    .output-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--code-bg);
+      position: relative;
+    }
+
+    .output-content {
+      flex: 1;
+      min-height: 380px;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-y: auto;
+    }
+
+    .output-content.empty {
+      color: #555c70;
+      font-family: var(--font-sans);
+    }
+
+    .panel-footer {
+      padding: 10px 14px;
+      border-top: 1px solid var(--surface-border);
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .status-badge {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-right: auto;
+    }
+
+    .rtl-detected {
+      direction: rtl;
+      text-align: right;
+    }
+
+    .ltr-detected {
+      direction: ltr;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      Talk<span>English</span>
+    </div>
+    <div class="shortcuts-hint">
+      [Ctrl+Enter] Refine &bull; [Ctrl/Alt+Y] Copy &bull; [Alt+N / Ctrl+Shift+N] New Tab &bull; [Alt+W / Ctrl+Shift+W] Close Tab
+    </div>
+  </header>
+
+  <div class="tab-bar">
+    <div class="tabs-container" id="tabsList"></div>
+    <button class="btn-new-tab" id="btnNewTab">+ New Session</button>
+  </div>
+
+  <main>
+    <div class="panel">
+      <div class="panel-header">
+        <span>Source Prompt</span>
+        <span class="dir-badge" id="inputDirBadge">LTR</span>
+      </div>
+      <div class="input-wrapper">
+        <textarea
+          id="promptInput"
+          dir="auto"
+          placeholder="Type or paste prompt in any language (RTL / LTR auto-detect)..."
+        ></textarea>
+      </div>
+      <div class="panel-footer">
+        <span class="status-badge" id="statusText">Ready</span>
+        <button class="btn btn-secondary" id="btnClear">Clear</button>
+        <button class="btn btn-primary" id="btnRefine">Refine (Ctrl+Enter)</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span>Refined English Prompt</span>
+        <span class="dir-badge" id="outputDirBadge">LTR</span>
+      </div>
+      <div class="output-wrapper">
+        <div id="promptOutput" class="output-content empty" dir="auto">Refined English prompt will appear here...</div>
+      </div>
+      <div class="panel-footer">
+        <button class="btn btn-secondary" id="btnCopy">Copy</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // State management
+    const RTL_REGEX = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
+    const STORAGE_KEY = "talkenglish_sessions_v1";
+
+    let state = {
+      activeId: null,
+      sessions: []
+    };
+
+    function detectBidi(text) {
+      if (!text || !text.trim()) return "ltr";
+      // Find first strong directional character
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (RTL_REGEX.test(ch)) return "rtl";
+        if (/[a-zA-Z]/.test(ch)) return "ltr";
+      }
+      return "ltr";
+    }
+
+    function applyBidi(element, badgeElement, text) {
+      const dir = detectBidi(text);
+      element.dir = "auto";
+      if (dir === "rtl") {
+        element.classList.add("rtl-detected");
+        element.classList.remove("ltr-detected");
+        if (badgeElement) badgeElement.textContent = "RTL";
+      } else {
+        element.classList.add("ltr-detected");
+        element.classList.remove("rtl-detected");
+        if (badgeElement) badgeElement.textContent = "LTR";
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        // storage quota exceeded or disabled
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.sessions) && parsed.sessions.length > 0) {
+            state = parsed;
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // Default state
+      const defaultId = "tab_" + Date.now();
+      state = {
+        activeId: defaultId,
+        sessions: [
+          { id: defaultId, title: "Session 1", input: "", output: "" }
+        ]
+      };
+      saveState();
+    }
+
+    function getActiveSession() {
+      return state.sessions.find(s => s.id === state.activeId) || state.sessions[0];
+    }
+
+    function renderTabs() {
+      const container = document.getElementById("tabsList");
+      container.innerHTML = "";
+
+      state.sessions.forEach((sess, idx) => {
+        const tabEl = document.createElement("div");
+        tabEl.className = "tab" + (sess.id === state.activeId ? " active" : "");
+        tabEl.onclick = () => switchTab(sess.id);
+
+        const titleEl = document.createElement("span");
+        titleEl.className = "tab-title";
+        titleEl.textContent = sess.title || ("Session " + (idx + 1));
+        tabEl.appendChild(titleEl);
+
+        if (state.sessions.length > 1) {
+          const closeBtn = document.createElement("button");
+          closeBtn.className = "tab-close";
+          closeBtn.innerHTML = "&times;";
+          closeBtn.title = "Close tab";
+          closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            closeTab(sess.id);
+          };
+          tabEl.appendChild(closeBtn);
+        }
+
+        container.appendChild(tabEl);
+      });
+    }
+
+    function renderActiveSession() {
+      const sess = getActiveSession();
+      if (!sess) return;
+
+      const inputEl = document.getElementById("promptInput");
+      const outputEl = document.getElementById("promptOutput");
+      const inputBadge = document.getElementById("inputDirBadge");
+      const outputBadge = document.getElementById("outputDirBadge");
+
+      inputEl.value = sess.input || "";
+      applyBidi(inputEl, inputBadge, inputEl.value);
+
+      if (sess.output) {
+        outputEl.textContent = sess.output;
+        outputEl.classList.remove("empty");
+        applyBidi(outputEl, outputBadge, sess.output);
+      } else {
+        outputEl.textContent = "Refined English prompt will appear here...";
+        outputEl.classList.add("empty");
+        applyBidi(outputEl, outputBadge, "English");
+      }
+    }
+
+    function switchTab(id) {
+      state.activeId = id;
+      saveState();
+      renderTabs();
+      renderActiveSession();
+      document.getElementById("promptInput").focus();
+    }
+
+    function createTab() {
+      const newId = "tab_" + Date.now();
+      const num = state.sessions.length + 1;
+      state.sessions.push({
+        id: newId,
+        title: "Session " + num,
+        input: "",
+        output: ""
+      });
+      state.activeId = newId;
+      saveState();
+      renderTabs();
+      renderActiveSession();
+      document.getElementById("promptInput").focus();
+    }
+
+    function closeTab(id) {
+      if (state.sessions.length <= 1) return;
+      const idx = state.sessions.findIndex(s => s.id === id);
+      if (idx === -1) return;
+
+      state.sessions.splice(idx, 1);
+      if (state.activeId === id) {
+        state.activeId = state.sessions[Math.max(0, idx - 1)].id;
+      }
+      saveState();
+      renderTabs();
+      renderActiveSession();
+    }
+
+    async function handleRefine() {
+      const sess = getActiveSession();
+      if (!sess) return;
+
+      const inputVal = sess.input.trim();
+      if (!inputVal) {
+        setStatus("Enter a prompt first", "var(--text-muted)");
+        return;
+      }
+
+      const btn = document.getElementById("btnRefine");
+      btn.disabled = true;
+      setStatus("Refining...", "var(--accent)");
+
+      try {
+        const res = await fetch("/api/refine", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: sess.input })
+        });
+        const data = await res.json();
+        if (data.error) {
+          setStatus("Error: " + data.error, "var(--danger)");
+        } else {
+          sess.output = data.result || "";
+          saveState();
+          renderActiveSession();
+          setStatus("Done", "var(--success)");
+        }
+      } catch (err) {
+        setStatus("Network error: " + err.message, "var(--danger)");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function setStatus(text, color) {
+      const el = document.getElementById("statusText");
+      el.textContent = text;
+      el.style.color = color || "var(--text-muted)";
+    }
+
+    // Event Listeners
+    document.getElementById("btnNewTab").onclick = createTab;
+
+    document.getElementById("promptInput").addEventListener("input", (e) => {
+      const sess = getActiveSession();
+      if (!sess) return;
+      sess.input = e.target.value;
+      
+      // Update tab title from first few words
+      const firstLine = sess.input.trim().split("\n")[0].slice(0, 15);
+      if (firstLine) {
+        sess.title = firstLine;
+      }
+      saveState();
+      renderTabs();
+      applyBidi(e.target, document.getElementById("inputDirBadge"), e.target.value);
+    });
+
+    document.getElementById("btnRefine").onclick = handleRefine;
+
+    document.getElementById("btnClear").onclick = () => {
+      const sess = getActiveSession();
+      if (!sess) return;
+      sess.input = "";
+      sess.output = "";
+      saveState();
+      renderTabs();
+      renderActiveSession();
+      setStatus("Cleared");
+    };
+
+    async function copyOutput() {
+      const sess = getActiveSession();
+      if (!sess || !sess.output) {
+        setStatus("Nothing to copy", "var(--text-muted)");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(sess.output);
+        setStatus("Copied to clipboard!", "var(--success)");
+      } catch (e) {
+        setStatus("Failed to copy", "var(--danger)");
+      }
+    }
+
+    document.getElementById("btnCopy").onclick = copyOutput;
+
+    // Keyboard shortcuts
+    window.addEventListener("keydown", (e) => {
+      const code = e.code;
+      const key = e.key.toLowerCase();
+      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+      const modKey = e.ctrlKey || e.metaKey;
+
+      // Refine: Ctrl+Enter or Cmd+Enter
+      if (modKey && (code === "Enter" || key === "enter")) {
+        e.preventDefault();
+        handleRefine();
+        return;
+      }
+
+      // Copy: Ctrl+Y / Cmd+Y (consistent with TUI) or Alt+Y or Ctrl+Shift+C
+      if (((modKey || e.altKey) && (code === "KeyY" || key === "y")) || (modKey && e.shiftKey && (code === "KeyC" || key === "c"))) {
+        e.preventDefault();
+        copyOutput();
+        return;
+      }
+
+      // New tab: Alt+N, Alt+T, or Ctrl+Shift+N / Ctrl+Shift+T / Cmd+Shift+N
+      if ((e.altKey && (code === "KeyN" || key === "n" || code === "KeyT" || key === "t")) ||
+          (modKey && e.shiftKey && (code === "KeyN" || key === "n" || code === "KeyT" || key === "t"))) {
+        e.preventDefault();
+        e.stopPropagation();
+        createTab();
+        return;
+      }
+
+      // Close tab: Alt+W, or Ctrl+Shift+W / Cmd+Shift+W
+      if ((e.altKey && (code === "KeyW" || key === "w")) ||
+          (modKey && e.shiftKey && (code === "KeyW" || key === "w"))) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (state.activeId) closeTab(state.activeId);
+        return;
+      }
+    }, true);
+
+    // Boot
+    loadState();
+    renderTabs();
+    renderActiveSession();
+  </script>
+</body>
+</html>

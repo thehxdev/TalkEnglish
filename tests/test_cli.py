@@ -20,6 +20,17 @@ class TestCLI(unittest.TestCase):
         self.assertFalse(args.headless)
         self.assertEqual(args.prompt, "test prompt")
 
+    def test_parse_args_web(self):
+        args = parse_args(["--web", "--port", "9000"])
+        self.assertTrue(args.web)
+        self.assertEqual(args.port, 9000)
+
+    @patch("talkenglish.web_server.run_server")
+    def test_main_runs_web_server(self, mock_run_server):
+        with patch("sys.argv", ["talkenglish", "--web", "--port", "8080"]):
+            main()
+        mock_run_server.assert_called_once_with(port=8080)
+
     @patch("talkenglish.middleware.PromptMiddleware.process")
     def test_run_cli_headless_output(self, mock_process):
         mock_process.return_value = "Test output"

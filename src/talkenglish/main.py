@@ -13,6 +13,17 @@ def parse_args(args=None):
         help="Run in headless CLI mode instead of interactive TUI."
     )
     parser.add_argument(
+        "--web",
+        action="store_true",
+        help="Run web UI server."
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Port for web UI server (default: 8000)."
+    )
+    parser.add_argument(
         "prompt",
         nargs="?",
         default=None,
@@ -32,6 +43,12 @@ def main():
     # If stdin is piped and no prompt provided in args
     if prompt is None and not sys.stdin.isatty():
         prompt = sys.stdin.read().strip()
+
+    # If --web flag given, run web server
+    if args.web:
+        from talkenglish.web_server import run_server
+        run_server(port=args.port)
+        return
 
     # If --headless, or prompt given, or running non-interactively
     if args.headless or prompt is not None or not sys.stdin.isatty():

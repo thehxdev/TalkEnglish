@@ -39,12 +39,28 @@ uv sync
 
 ### Environment Configuration
 
-Configure your OpenAI-compatible API endpoint via `.env` or exported variables:
+Copy the example configuration file and fill in your credentials:
 
 ```bash
-export TRANSLATOR_API_KEY="sk-..."
-export TRANSLATOR_API_BASE="https://api.openai.com/v1"   # Default: OpenAI
-export TRANSLATOR_MODEL="gpt-4o-mini"                   # Default: gpt-4o-mini
+cp .env.example .env
+```
+
+Default variables in `.env`:
+
+```bash
+# OpenAI or OpenAI-compatible provider API key
+TRANSLATOR_API_KEY="sk-..."
+
+# API Base URL (defaults to https://api.openai.com/v1 if unset)
+# Examples:
+#   OpenAI:       https://api.openai.com/v1
+#   OpenRouter:   https://openrouter.ai/api/v1
+#   Local proxy:  http://localhost:20128/v1
+#   Ollama:       http://localhost:11434/v1
+TRANSLATOR_API_BASE="https://api.openai.com/v1"
+
+# Model identifier (e.g., gpt-4o-mini, ag/gemini-3.8-flash-low)
+TRANSLATOR_MODEL="gpt-4o-mini"
 ```
 
 *Note: TalkEnglish automatically detects and loads `.env` or `api` files in the working directory on startup.*

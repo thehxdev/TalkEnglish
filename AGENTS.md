@@ -16,10 +16,18 @@ TalkEnglish is a prompt translation and engineering refinement tool for autonomo
 # Sync environment and dependencies
 uv sync
 
+# Configure development environment
+cp .env.example .env
+
 # Run complete test suite (must always pass with 0 errors)
 uv run python -m unittest discover tests -v
 
-# Run single test module
+# Run individual test modules
+uv run python -m unittest tests/test_detector.py
+uv run python -m unittest tests/test_translator.py
+uv run python -m unittest tests/test_middleware.py
+uv run python -m unittest tests/test_clipboard.py
+uv run python -m unittest tests/test_cli.py
 uv run python -m unittest tests/test_textual_tui.py
 
 # Launch interactive TUI

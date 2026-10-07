@@ -5,6 +5,7 @@ from textual.binding import Binding
 from textual.containers import Vertical
 from textual.widgets import Footer, Header, Label, TextArea
 from talkenglish.middleware import PromptMiddleware
+from talkenglish.clipboard import copy_to_system_clipboard
 
 TUI_CSS = """
 Screen {
@@ -88,11 +89,20 @@ class TalkEnglishApp(App):
     def action_copy(self) -> None:
         output_area = self.query_one("#output-text", TextArea)
         text = output_area.text.strip()
-        if text:
+        if not text:
+            self.notify("Nothing to copy.", severity="warning")
+            return
+
+        success = copy_to_system_clipboard(text)
+        try:
             self.copy_to_clipboard(text)
+        except Exception:
+            pass
+
+        if success:
             self.notify("Copied refined prompt to clipboard!", severity="information")
         else:
-            self.notify("Nothing to copy.", severity="warning")
+            self.notify("Failed to copy to clipboard.", severity="error")
 
     def action_refine(self) -> None:
         if self.is_busy:

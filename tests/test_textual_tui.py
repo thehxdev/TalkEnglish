@@ -51,7 +51,8 @@ class TestTextualTUI(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(output_area.text, "Refactored engineering prompt")
             mock_mw.process.assert_called_once_with("یک تسک تستی")
 
-    async def test_copy_shortcut(self):
+    @patch("talkenglish.tui.copy_to_system_clipboard", return_value=True)
+    async def test_copy_shortcut(self, mock_copy_system):
         mock_mw = MagicMock()
         app = TalkEnglishApp(middleware=mock_mw)
         async with app.run_test() as pilot:
@@ -60,6 +61,7 @@ class TestTextualTUI(unittest.IsolatedAsyncioTestCase):
             with patch.object(app, "copy_to_clipboard") as mock_clipboard:
                 await pilot.press("ctrl+y")
                 mock_clipboard.assert_called_once_with("Text to copy")
+            mock_copy_system.assert_called_once_with("Text to copy")
 
     async def test_duplicate_refine_prevented_while_busy(self):
         mock_mw = MagicMock()

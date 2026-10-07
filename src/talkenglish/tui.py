@@ -2,8 +2,8 @@ from typing import Optional
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
-from textual.widgets import Button, Footer, Header, Label, TextArea
+from textual.containers import Vertical
+from textual.widgets import Footer, Header, Label, TextArea
 from talkenglish.middleware import PromptMiddleware
 
 TUI_CSS = """
@@ -28,6 +28,7 @@ Screen {
     text-style: bold;
     color: $accent;
     padding: 0 0;
+    margin-bottom: 0;
 }
 
 TextArea {
@@ -38,16 +39,6 @@ TextArea {
 #output-text {
     background: $surface-darken-1;
 }
-
-.actions {
-    height: auto;
-    margin-top: 1;
-    margin-bottom: 0;
-}
-
-Button {
-    margin-right: 1;
-}
 """
 
 class TalkEnglishApp(App):
@@ -57,15 +48,17 @@ class TalkEnglishApp(App):
 
     BINDINGS = [
         Binding("ctrl+j", "refine", "Refine (Ctrl+J)", priority=True),
-        Binding("ctrl+enter", "refine", "Refine (Ctrl+Enter)", priority=True),
         Binding("f5", "refine", "Refine (F5)", priority=True),
-        Binding("ctrl+k", "clear", "Clear (Ctrl+K)"),
-        Binding("ctrl+c", "quit", "Quit", priority=True),
+        Binding("ctrl+enter", "refine", "Refine (Ctrl+Enter)", priority=True),
+        Binding("ctrl+k", "clear", "Clear (Ctrl+K)", priority=True),
+        Binding("ctrl+y", "copy", "Copy (Ctrl+Y)", priority=True),
+        Binding("ctrl+c", "quit", "Quit (Ctrl+C)", priority=True),
     ]
 
     def __init__(self, middleware: Optional[PromptMiddleware] = None):
         super().__init__()
         self.middleware = middleware or PromptMiddleware()
+        self.is_busy = False
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -76,9 +69,6 @@ class TalkEnglishApp(App):
                     id="input-text",
                     show_line_numbers=True,
                 )
-                with Horizontal(classes="actions"):
-                    yield Button("Refine Prompt", id="btn-refine", variant="primary")
-                    yield Button("Clear", id="btn-clear", variant="error")
 
             with Vertical(classes="panel"):
                 yield Label("Refined Engineering Prompt (English):", classes="panel-title")
@@ -87,18 +77,7 @@ class TalkEnglishApp(App):
                     read_only=True,
                     show_line_numbers=True,
                 )
-                with Horizontal(classes="actions"):
-                    yield Button("Copy to Clipboard", id="btn-copy", variant="success")
         yield Footer()
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        button_id = event.button.id
-        if button_id == "btn-refine":
-            self.action_refine()
-        elif button_id == "btn-clear":
-            self.action_clear()
-        elif button_id == "btn-copy":
-            self.action_copy()
 
     def action_clear(self) -> None:
         input_area = self.query_one("#input-text", TextArea)
@@ -116,14 +95,18 @@ class TalkEnglishApp(App):
             self.notify("Nothing to copy.", severity="warning")
 
     def action_refine(self) -> None:
+        if self.is_busy:
+            self.notify("Already refining prompt...", severity="warning")
+            return
+
         input_area = self.query_one("#input-text", TextArea)
         text = input_area.text.strip()
         if not text:
             self.notify("Input prompt is empty.", severity="warning")
             return
 
-        btn_refine = self.query_one("#btn-refine", Button)
-        btn_refine.disabled = True
+        self.is_busy = True
+        self.sub_title = "Refining prompt..."
         self.notify("Refining prompt for coding agent...", severity="information")
         self._run_refine(text)
 
@@ -138,13 +121,13 @@ class TalkEnglishApp(App):
     def _on_refine_success(self, result: str) -> None:
         output_area = self.query_one("#output-text", TextArea)
         output_area.text = result
-        btn_refine = self.query_one("#btn-refine", Button)
-        btn_refine.disabled = False
+        self.is_busy = False
+        self.sub_title = "Engineering Prompt Refiner"
         self.notify("Refinement complete!", severity="information")
 
     def _on_refine_error(self, err_msg: str) -> None:
-        btn_refine = self.query_one("#btn-refine", Button)
-        btn_refine.disabled = False
+        self.is_busy = False
+        self.sub_title = "Engineering Prompt Refiner"
         self.notify(f"Refinement error: {err_msg}", severity="error")
 
 def run_tui() -> None:
